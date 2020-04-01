@@ -1,6 +1,6 @@
 const { db } = require('../util/admin');
 
-
+// Get all screams
 exports.getAllScreams = (request, response) => {
     db.collection('screams')
         .orderBy('createdAt', 'desc')
@@ -25,6 +25,7 @@ exports.getAllScreams = (request, response) => {
         });
 }
 
+// Post one scream
 exports.postOneScream = (request, response) => {
     if ( request.body.body.trim() === `` ) {
         return response.status(400).json({ body: 'Body must not be empty'});
@@ -51,6 +52,7 @@ exports.postOneScream = (request, response) => {
             console.error(err);
         });  
 }
+
 // Get one scream
 exports.getScream = (request, response) => {
     let screamData = {};
@@ -79,6 +81,7 @@ exports.getScream = (request, response) => {
         })
 }
 
+// Comment on a scream
 exports.commentOnScream = (request, response) => {
     if(request.body.body.trim() === ``) return response.status(400).json({ error: 'Must not be empty'});
 
@@ -95,6 +98,9 @@ exports.commentOnScream = (request, response) => {
             if(!doc.exists){
                 return response.status(404).json({ error: 'Scream not found'});
             }
+            return doc.ref.update({ commentCount: doc.data().commentCount + 1});
+        })
+        .then(() => {
             return db.collection('comments').add(newComment);
         })
         .then(() => {
@@ -149,6 +155,7 @@ exports.likeScream = (request, response) => {
         });
 };
 
+// Unlike a scream
 exports.unlikeScream = (request, response) => {
     const likeDocument = db
         .collection('likes')
@@ -188,5 +195,28 @@ exports.unlikeScream = (request, response) => {
         .catch((err) => {
             console.error(err);
             response.status(500).json({ error: err.code });
+        });
+};
+
+// Delete a scream
+exports.deleteScream = (request, response) => {
+    const document = db.doc(`/screams/${request.params.screamId}`);
+    document.get()
+        .then((doc) => {
+            if(!doc.exists){
+                return response.status(404).json({ error: 'Scream not found'});
+            }
+            if(doc.data().userHandle !== request.user.handle){
+                return response.status(403).json({ error: 'Unauthorized'});
+            } else {
+                return document.delete();
+            }
+        })
+        .then(() => {
+            response.json({ message: 'Scream deleted successfully'});
+        })
+        .catch(err => {
+            console.error(err);
+            return response.status(500).json({ error: err.code});
         });
 };
