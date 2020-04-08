@@ -84,8 +84,8 @@ exports.login = (request,response) => {
             console.error(err);
             if(err.code === 'auth/wrong-password'){
                 return response.status(403).json({ general: "Wrong credentials, please try again"});
-            }else if(err.code === 'auth/user-not-found'){
-                return response.status(403).json({ generel: "Email address not registered !!! Please Sign up"});
+            }else if(err.code === 'auth/user-not-found' || err.code === 'auth/invalid-email'){
+                return response.status(403).json({ general: "Email address not registered !!! Please Sign up"});
             }else{
                 return response.status(500).json({error: err.code});
             }
